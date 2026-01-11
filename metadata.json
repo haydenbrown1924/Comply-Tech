@@ -1,0 +1,9 @@
+{
+  "name": "Comply Technologies",
+  "description": "A comprehensive business management platform for inquiries, quoting, scheduling, asset management, and compliance across three access levels: Software Manager, Business Owner, and Worker.",
+  "requestFramePermissions": [
+    "camera",
+    "microphone",
+    "geolocation"
+  ]
+}

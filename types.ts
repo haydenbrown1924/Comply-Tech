@@ -5,11 +5,22 @@ export enum UserRole {
   WORKER = 'WORKER'
 }
 
+export type ModuleId = 'quoting' | 'scheduling' | 'assets' | 'labor' | 'materials' | 'safety' | 'business';
+
+export interface BusinessConfig {
+  id: string;
+  name: string;
+  ownerEmail: string;
+  enabledModules: ModuleId[];
+  status: 'Active' | 'Pending' | 'Suspended';
+}
+
 export interface User {
   id: string;
   name: string;
   email: string;
   role: UserRole;
+  businessId?: string;
   businessName?: string;
 }
 
@@ -45,3 +56,13 @@ export interface SafetyRecord {
   date: string;
   severity: 'Low' | 'Medium' | 'High' | 'Critical';
 }
+
+export const ALL_MODULES: { id: ModuleId; name: string }[] = [
+  { id: 'business', name: 'Business Hub' },
+  { id: 'quoting', name: 'Quoting & Scoping' },
+  { id: 'scheduling', name: 'Job Scheduling' },
+  { id: 'assets', name: 'Asset Register' },
+  { id: 'labor', name: 'Labor & Payroll' },
+  { id: 'materials', name: 'Materials' },
+  { id: 'safety', name: 'Compliance & Safety' },
+];

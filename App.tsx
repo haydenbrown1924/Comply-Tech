@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { UserRole, User } from './types';
+import { UserRole, User, BusinessConfig, ModuleId } from './types';
 import Login from './components/Login';
 import Sidebar from './components/Sidebar';
 import Dashboard from './components/Dashboard';
@@ -14,11 +14,35 @@ import SafetyPortal from './components/SafetyPortal';
 import LaborPortal from './components/LaborPortal';
 import MaterialPortal from './components/MaterialPortal';
 
+const INITIAL_BUSINESSES: BusinessConfig[] = [
+  { 
+    id: 'biz-ace', 
+    name: 'Ace Construction', 
+    ownerEmail: 'john.business@example.com', 
+    enabledModules: ['business', 'quoting', 'scheduling', 'assets', 'labor', 'materials', 'safety'],
+    status: 'Active'
+  },
+  { 
+    id: 'biz-fast', 
+    name: 'Fast Electrical', 
+    ownerEmail: 'fast.elec@example.com', 
+    enabledModules: ['business', 'scheduling', 'safety'],
+    status: 'Active'
+  }
+];
+
 const App: React.FC = () => {
   const [user, setUser] = useState<User | null>(null);
   const [currentView, setCurrentView] = useState<string>('dashboard');
+  const [businesses, setBusinesses] = useState<BusinessConfig[]>(() => {
+    const saved = localStorage.getItem('comply_businesses');
+    return saved ? JSON.parse(saved) : INITIAL_BUSINESSES;
+  });
 
-  // Handle auto-login for demo or persistence
+  useEffect(() => {
+    localStorage.setItem('comply_businesses', JSON.stringify(businesses));
+  }, [businesses]);
+
   useEffect(() => {
     const savedUser = localStorage.getItem('comply_user');
     if (savedUser) {
@@ -37,16 +61,35 @@ const App: React.FC = () => {
     localStorage.removeItem('comply_user');
   };
 
+  const handleAddBusiness = (newBiz: BusinessConfig) => {
+    setBusinesses([...businesses, newBiz]);
+  };
+
+  const handleUpdateModules = (bizId: string, modules: ModuleId[]) => {
+    setBusinesses(businesses.map(b => b.id === bizId ? { ...b, enabledModules: modules } : b));
+  };
+
   if (!user) {
     return <Login onLogin={handleLogin} />;
   }
 
+  // Get current user's business config
+  const userBiz = businesses.find(b => b.id === user.businessId || b.name === user.businessName);
+  const enabledModules = userBiz?.enabledModules || [];
+
   const renderContent = () => {
+    // If not Admin, check if current view is restricted
+    if (user.role !== UserRole.ADMIN && currentView !== 'dashboard') {
+      if (!enabledModules.includes(currentView as ModuleId)) {
+        return <div className="p-8 text-center text-slate-500 italic">This module is not enabled for your subscription.</div>;
+      }
+    }
+
     switch (currentView) {
       case 'dashboard':
         return <Dashboard user={user} />;
       case 'analytics':
-        return <AdminAnalytics />;
+        return <AdminAnalytics businesses={businesses} onAddBusiness={handleAddBusiness} onUpdateModules={handleUpdateModules} />;
       case 'business':
         return <BusinessPortal />;
       case 'worker':
@@ -76,6 +119,7 @@ const App: React.FC = () => {
         onViewChange={setCurrentView} 
         onLogout={handleLogout}
         userName={user.name}
+        enabledModules={enabledModules}
       />
       <main className="flex-1 overflow-y-auto p-4 md:p-8">
         <header className="mb-8 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
